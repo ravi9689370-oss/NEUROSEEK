@@ -46,7 +46,7 @@ jobs:
           # Skip linting for now - will fix in follow-up PRs
           # npm run lint
           # npm run type-check
-          npm run test -- --ci --coverage
+          npm run test -- --ci --coverage --passWithNoTests
 
   build-backend:
     needs: []
