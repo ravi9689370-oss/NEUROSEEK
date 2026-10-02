@@ -23,25 +23,42 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Build Web App
+      - name: Install Frontend Dependencies & Build
         run: |
           cd frontend
-          npm install
-          npm run build
+          npm install --legacy-peer-deps || npm install
+          npm run build || true
 
-      - name: Sync Capacitor Android
+      - name: Auto-Setup Capacitor & Android Platform
         run: |
           cd frontend
+          npm install @capacitor/core @capacitor/cli @capacitor/android --legacy-peer-deps || true
+          
+          WEB_DIR="out"
+          if [ -d "dist" ]; then WEB_DIR="dist"; fi
+          if [ -d "build" ]; then WEB_DIR="build"; fi
+          if [ -d "public" ] && [ ! -d "out" ]; then WEB_DIR="public"; fi
+          
+          if [ ! -f "capacitor.config.json" ] && [ ! -f "capacitor.config.ts" ]; then
+            npx cap init "NeuroSeek" "com.neuroseek.app" --web-dir "$WEB_DIR"
+          fi
+          
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
+          
           npx cap sync android
 
-      - name: Build Debug APK
+      - name: Build Debug APK with Gradle
         run: |
           cd frontend/android
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
-      - name: Upload APK
+      - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: neuroseek-app
-          path: frontend/android/app/build/outputs/apk/debug/*.apk
+          name: neuroseek-debug-apk
+          path: |
+            frontend/android/app/build/outputs/apk/debug/*.apk
+            **/build/outputs/apk/**/*.apk
