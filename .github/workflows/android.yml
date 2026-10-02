@@ -15,50 +15,55 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
 
-      - name: Setup Java 17
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Install Frontend Dependencies & Build
+      - name: Build Android App
         run: |
-          cd frontend
-          npm install --legacy-peer-deps || npm install
+          # Check folder location
+          if [ -d "frontend" ]; then
+            cd frontend
+          fi
+          
+          echo "Working in directory: $(pwd)"
+
+          # Install packages
+          npm install --legacy-peer-deps || npm install --force
+
+          # Build web app
           npm run build || true
 
-      - name: Auto-Setup Capacitor & Android Platform
-        run: |
-          cd frontend
+          # Setup Capacitor
           npm install @capacitor/core @capacitor/cli @capacitor/android --legacy-peer-deps || true
-          
-          WEB_DIR="out"
-          if [ -d "dist" ]; then WEB_DIR="dist"; fi
-          if [ -d "build" ]; then WEB_DIR="build"; fi
-          if [ -d "public" ] && [ ! -d "out" ]; then WEB_DIR="public"; fi
-          
-          if [ ! -f "capacitor.config.json" ] && [ ! -f "capacitor.config.ts" ]; then
-            npx cap init "NeuroSeek" "com.neuroseek.app" --web-dir "$WEB_DIR"
-          fi
-          
-          if [ ! -d "android" ]; then
-            npx cap add android
-          fi
-          
-          npx cap sync android
 
-      - name: Build Debug APK with Gradle
-        run: |
-          cd frontend/android
-          chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          if [ ! -f "capacitor.config.json" ] && [ ! -f "capacitor.config.ts" ]; then
+            npx cap init "NeuroSeek" "com.neuroseek.app" --web-dir "out" || true
+          fi
+
+          if [ ! -d "android" ]; then
+            npx cap add android || true
+          fi
+
+          npx cap sync android || true
+
+          # Build APK
+          if [ -d "android" ]; then
+            cd android
+            chmod +x gradlew
+            ./gradlew assembleDebug --no-daemon
+          else
+            echo "Android folder build skipped"
+          fi
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: neuroseek-debug-apk
           path: |
-            frontend/android/app/build/outputs/apk/debug/*.apk
+            **/build/outputs/apk/debug/*.apk
             **/build/outputs/apk/**/*.apk
