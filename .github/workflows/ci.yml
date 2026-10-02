@@ -56,7 +56,7 @@ jobs:
       - name: Build Debug APK
         run: |
           cd frontend/android
-          ./gradlew assembleDebug
+          for i in {1..3}; do ./gradlew assembleDebug && break || sleep 30; done
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -68,7 +68,7 @@ jobs:
       - name: Build Release APK (unsigned)
         run: |
           cd frontend/android
-          ./gradlew assembleRelease
+          for i in {1..3}; do ./gradlew assembleRelease && break || sleep 30; done
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
