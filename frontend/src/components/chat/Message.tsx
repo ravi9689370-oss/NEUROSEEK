@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { MessageCircle, Send, Loader2, Copy, ThumbsUp, ThumbsDown, Edit, RotateCcw, Flag, MoreHorizontal, Check, X } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
-import { remarkGfm } from 'remark-gfm'
+import remarkGfm from 'remark-gfm'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { clsx } from 'clsx'

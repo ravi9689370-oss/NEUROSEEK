@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Plus, MessageSquare, ChevronRight, Pin, Archive, MoreVertical, Search, Settings, Trash2, Edit2, Copy, Branching } from 'lucide-react'
+import { X, Plus, MessageSquare, ChevronRight, Pin, Archive, MoreVertical, Search, Settings, Trash2, Edit2, Copy, GitBranch } from 'lucide-react'
 import { clsx } from 'clsx'
 import { formatDistanceToNow } from 'date-fns'
 import { Conversation } from '@/stores/chatStore'
@@ -197,7 +197,7 @@ function ConversationItem({ conversation, isActive, onSelect, onClose, hovered, 
               onClick={(e) => { e.stopPropagation(); setShowMenu(false) }}
               className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent transition-colors"
             >
-              <Branching className="h-4 w-4" />
+              <GitBranch className="h-4 w-4" />
               Branch from here
             </button>
             <button
