@@ -87,16 +87,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Download Debug APK
+        uses: actions/download-artifact@v4
+        with:
+          name: neuroseek-debug-apk
+          path: ./debug-apk
+
       - name: Download Release APK
         uses: actions/download-artifact@v4
         with:
           name: neuroseek-release-apk
           path: ./release-apk
 
+      - name: List artifacts
+        run: |
+          ls -la ./debug-apk/
+          ls -la ./release-apk/
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: ./release-apk/*.apk
+          files: |
+            ./debug-apk/*.apk
+            ./release-apk/*.apk
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
