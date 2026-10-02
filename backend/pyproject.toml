@@ -24,10 +24,11 @@ dependencies = [
     "pydantic-settings>=2.3.0",
     
     # Database
-    "sqlalchemy>=2.0.30",
+    "sqlalchemy[asyncio]>=2.0.30",
     "asyncpg>=0.29.0",
     "alembic>=1.13.0",
     "pgvector>=0.2.5",
+    "greenlet>=3.0",
     
     # Redis & Queue
     "redis>=5.0.0",
