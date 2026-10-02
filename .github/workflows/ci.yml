@@ -53,22 +53,17 @@ jobs:
           cd frontend
           npx cap sync android
 
-      - name: Clear Gradle Cache
-        run: |
-          rm -rf ~/.gradle/caches/jars-9/
-          rm -rf ~/.gradle/caches/build-cache-*/
-          # Pre-create the directory and download BouncyCastle JAR
-          mkdir -p ~/.gradle/caches/jars-9/18366b31678c0171857be093a3b8ec22/
-          curl -L -o ~/.gradle/caches/jars-9/18366b31678c0171857be093a3b8ec22/bcprov-jdk18on-1.79.jar \
-            https://repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk18on/1.79/bcprov-jdk18on-1.79.jar 2>/dev/null || true
-
+      - name: Set up Gradle
+        uses: gradle/gradle-build-action@v3
+        with:
+          gradle-version: 8.5
+          arguments: assembleDebug
+          cache-read-only: false
+          cache-key-prefix: neuroseek
       - name: Build Debug APK
         run: |
           cd frontend/android
-          for i in {1..5}; do
-            echo "Attempt $i/5 to build debug APK..."
-            ./gradlew assembleDebug --no-daemon && break || sleep 60
-          done
+          ./gradlew assembleDebug --no-daemon
 
       - name: Find and Upload Debug APK
         run: |
@@ -82,18 +77,16 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
-      - name: Clear Gradle Cache (Release)
-        run: |
-          rm -rf ~/.gradle/caches/jars-9/
-          rm -rf ~/.gradle/caches/build-cache-*/
-          
       - name: Build Release APK (unsigned)
+        uses: gradle/gradle-build-action@v3
+        with:
+          gradle-version: 8.5
+          arguments: assembleRelease
+          cache-read-only: false
+          cache-key-prefix: neuroseek
+      - name: Find and Upload Release APK
         run: |
-          cd frontend/android
-          for i in {1..5}; do
-            echo "Attempt $i/5 to build release APK..."
-            ./gradlew assembleRelease --no-daemon && break || sleep 60
-          done
+          find . -name "*.apk" -type f 2>/dev/null | head -20
 
       - name: Find and Upload Release APK
         run: |
