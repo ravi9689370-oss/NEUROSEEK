@@ -23,47 +23,40 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Build Android App
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Install and Build Web App
         run: |
-          # Check folder location
-          if [ -d "frontend" ]; then
-            cd frontend
+          if [ -d "frontend" ]; then cd frontend; fi
+          npm install --legacy-peer-deps
+          npm run build
+
+      - name: Setup Capacitor
+        run: |
+          if [ -d "frontend" ]; then cd frontend; fi
+          npm install @capacitor/core @capacitor/cli @capacitor/android --legacy-peer-deps
+          
+          if [ ! -f "capacitor.config.json" ] && [ ! -f "capacitor.config.ts" ]; then
+            npx cap init "NeuroSeek" "com.neuroseek.app" --web-dir "out"
           fi
           
-          echo "Working in directory: $(pwd)"
+          npx cap add android || true
+          npx cap sync android
 
-          # Install packages
-          npm install --legacy-peer-deps || npm install --force
-
-          # Build web app
-          npm run build || true
-
-          # Setup Capacitor
-          npm install @capacitor/core @capacitor/cli @capacitor/android --legacy-peer-deps || true
-
-          if [ ! -f "capacitor.config.json" ] && [ ! -f "capacitor.config.ts" ]; then
-            npx cap init "NeuroSeek" "com.neuroseek.app" --web-dir "out" || true
-          fi
-
-          if [ ! -d "android" ]; then
-            npx cap add android || true
-          fi
-
-          npx cap sync android || true
-
-          # Build APK
-          if [ -d "android" ]; then
-            cd android
-            chmod +x gradlew
-            ./gradlew assembleDebug --no-daemon
-          else
-            echo "Android folder build skipped"
-          fi
+      - name: Build APK (Fixing Gradle Jar Error)
+        run: |
+          if [ -d "frontend" ]; then cd frontend; fi
+          cd android
+          chmod +x gradlew
+          
+          # यहाँ हम पुरानी खराब फाइल को साफ कर रहे हैं और नई डाउनलोड कर रहे हैं
+          ./gradlew clean
+          ./gradlew assembleDebug --no-daemon --refresh-dependencies
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: neuroseek-debug-apk
           path: |
-            **/build/outputs/apk/debug/*.apk
-            **/build/outputs/apk/**/*.apk
+            **/app/build/outputs/apk/debug/*.apk
