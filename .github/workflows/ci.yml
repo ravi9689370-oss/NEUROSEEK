@@ -57,8 +57,8 @@ jobs:
         run: |
           rm -rf ~/.gradle/caches/jars-9/
           rm -rf ~/.gradle/caches/build-cache-*/
-          
-- name: Build Debug APK
+
+      - name: Build Debug APK
         run: |
           cd frontend/android
           for i in {1..5}; do
@@ -90,7 +90,6 @@ jobs:
             echo "Attempt $i/5 to build release APK..."
             ./gradlew assembleRelease --no-daemon && break || sleep 60
           done
-
 
       - name: Find and Upload Release APK
         run: |
