@@ -3,6 +3,9 @@ name: Android APK Build
 on:
   push:
     branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/android.yml'
   workflow_dispatch:
 
 jobs:
@@ -43,6 +46,13 @@ jobs:
           sed -i 's#distributionUrl=.*#distributionUrl=https\\://services.gradle.org/distributions/gradle-8.7-all.zip#' gradle/wrapper/gradle-wrapper.properties
           cat gradle/wrapper/gradle-wrapper.properties
 
+      - name: Enable AndroidX
+        run: |
+          cd frontend/android
+          grep -q "android.useAndroidX" gradle.properties || echo "android.useAndroidX=true" >> gradle.properties
+          grep -q "android.enableJetifier" gradle.properties || echo "android.enableJetifier=true" >> gradle.properties
+          cat gradle.properties
+
       - name: Build APK
         run: |
           cd frontend/android
@@ -54,9 +64,3 @@ jobs:
         with:
           name: app-debug
           path: frontend/android/app/build/outputs/apk/debug/app-debug.apk
-  - name: Enable AndroidX
-        run: |
-          cd frontend/android
-          grep -q "android.useAndroidX" gradle.properties || echo "android.useAndroidX=true" >> gradle.properties
-          grep -q "android.enableJetifier" gradle.properties || echo "android.enableJetifier=true" >> gradle.properties
-          cat gradle.properties
