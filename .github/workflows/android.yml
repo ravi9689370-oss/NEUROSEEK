@@ -23,9 +23,6 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-
       - name: Install and Build Web App
         run: |
           if [ -d "frontend" ]; then cd frontend; fi
@@ -44,15 +41,17 @@ jobs:
           npx cap add android || true
           npx cap sync android
 
-      - name: Build APK (Fixing Gradle Jar Error)
+      - name: Build APK (Force Delete Cache)
         run: |
           if [ -d "frontend" ]; then cd frontend; fi
           cd android
-          chmod +x gradlew
           
-          # यहाँ हम पुरानी खराब फाइल को साफ कर रहे हैं और नई डाउनलोड कर रहे हैं
+          # यह कमांड छुपी हुई करप्ट कैशे फाइल को जड़ से डिलीट कर देगी
+          rm -rf ~/.gradle/caches/
+          
+          chmod +x gradlew
           ./gradlew clean
-          ./gradlew assembleDebug --no-daemon --refresh-dependencies
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
