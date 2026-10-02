@@ -13,6 +13,10 @@ import { formatDistanceToNow } from 'date-fns'
 
 const codeBlocks: Record<string, React.ReactNode> = {}
 
+interface CodeNode {
+  children?: Array<{ value?: string }>
+}
+
 interface MessageProps {
   message: {
     id: string
@@ -71,7 +75,8 @@ export function Message({ message, conversationId, onFeedback, onRegenerate }: M
       components={{
         code: ({ node, children, className, ...props }) => {
           const language = (className || '').replace(/language-/, '') || 'text'
-          const code = String(node.children?.[0]?.value || '')
+          const codeNode = node as CodeNode | undefined
+          const code = codeNode?.children?.[0]?.value ? String(codeNode.children[0].value) : ''
           
           return (
             <SyntaxHighlighter
