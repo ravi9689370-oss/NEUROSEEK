@@ -6,9 +6,9 @@ build-backend = "setuptools.build_meta"
 name = "neuroseek-backend"
 version = "0.1.0"
 description = "NeuroSeek AI Backend - Self-improving multi-model inference server"
-readme = "README.md"
+readme = "../README.md"
 requires-python = ">=3.11"
-license = {text = "MIT"}
+license = {file = "../LICENSE"}
 authors = [{name = "NeuroSeek Team"}]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -97,3 +97,8 @@ python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+exclude = ["tests*", "scripts*", "docs*", "backend/tests*", "backend/scripts*"]
