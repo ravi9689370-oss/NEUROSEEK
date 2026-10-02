@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { X, Plus, MessageSquare, ChevronRight, Pin, Archive, MoreVertical, Search, Settings, Trash2, Edit2, Copy, GitBranch } from 'lucide-react'
 import { clsx } from 'clsx'
 import { formatDistanceToNow } from 'date-fns'
-import { Conversation } from '@/stores/chatStore'
+import { Conversation, useChatStore } from '@/stores/chatStore'
 
 interface SidebarProps {
   isOpen: boolean
@@ -18,6 +18,7 @@ interface SidebarProps {
 export function Sidebar({ isOpen, onClose, conversations, currentConversationId, onSelectConversation, onNewChat }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [hoveredId, setHoveredId] = useState<string | null>(null)
+  const togglePinConversation = useChatStore((state) => state.togglePinConversation)
 
   const filteredConversations = conversations.filter((c) =>
     c.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -142,6 +143,7 @@ function ConversationItem({ conversation, isActive, onSelect, onClose, hovered, 
   onLeave: () => void
 }) {
   const [showMenu, setShowMenu] = useState(false)
+  const togglePinConversation = useChatStore((state) => state.togglePinConversation)
 
   return (
     <div
@@ -187,7 +189,7 @@ function ConversationItem({ conversation, isActive, onSelect, onClose, hovered, 
           <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
           <div className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-popover border border-border rounded-lg shadow-lg py-1 min-w-[160px] animate-slide-up">
             <button
-              onClick={(e) => { e.stopPropagation(); conversation.isPinned ? undefined : undefined; setShowMenu(false) }}
+              onClick={(e) => { e.stopPropagation(); togglePinConversation(conversation.id); setShowMenu(false) }}
               className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent transition-colors"
             >
               <Pin className="h-4 w-4" />

@@ -9,6 +9,7 @@ export interface Conversation {
   updatedAt: string
   messageCount: number
   model?: string
+  isPinned?: boolean
 }
 
 export interface Message {
@@ -36,6 +37,7 @@ interface ChatState {
   setCurrentConversation: (id: string) => void
   deleteConversation: (id: string) => void
   updateConversationTitle: (id: string, title: string) => void
+  togglePinConversation: (id: string) => void
   addMessage: (conversationId: string, message: Omit<Message, 'id' | 'timestamp'>) => Message
   updateMessage: (conversationId: string, messageId: string, updates: Partial<Message>) => void
   deleteMessage: (conversationId: string, messageId: string) => void
@@ -89,6 +91,14 @@ export const useChatStore = create<ChatState>()(
         set((state) => ({
           conversations: state.conversations.map((c) =>
             c.id === id ? { ...c, title, updatedAt: new Date().toISOString() } : c
+          ),
+        }))
+      },
+
+      togglePinConversation: (id: string) => {
+        set((state) => ({
+          conversations: state.conversations.map((c) =>
+            c.id === id ? { ...c, isPinned: !c.isPinned, updatedAt: new Date().toISOString() } : c
           ),
         }))
       },
