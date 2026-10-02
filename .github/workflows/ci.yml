@@ -61,11 +61,16 @@ jobs:
             ./gradlew assembleDebug --no-daemon && break || sleep 60
           done
 
+      - name: Find and Upload Debug APK
+        run: |
+          cd frontend/android
+          find . -name "*.apk" -type f | head -20
+          
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: neuroseek-debug-apk
-          path: frontend/android/app/build/outputs/apk/debug/app-debug.apk
+          path: frontend/android/app/build/outputs/apk/debug/*.apk
           retention-days: 7
           if-no-files-found: error
 
@@ -77,11 +82,17 @@ jobs:
             ./gradlew assembleRelease --no-daemon && break || sleep 60
           done
 
+
+      - name: Find and Upload Release APK
+        run: |
+          cd frontend/android
+          find . -name "*.apk" -type f | head -20
+
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
           name: neuroseek-release-apk
-          path: frontend/android/app/build/outputs/apk/release/app-release-unsigned.apk
+          path: frontend/android/app/build/outputs/apk/release/*.apk
           retention-days: 7
           if-no-files-found: error
 
