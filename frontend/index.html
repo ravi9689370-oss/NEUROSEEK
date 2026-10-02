@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroSeek AI — Universal Expert</title>
+    <meta name="description" content="Universal Expert AI with 34+ specialized domains">
+    <link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;NeuroSeek AI&quot;,&quot;short_name&quot;:&quot;NeuroSeek&quot;,&quot;start_url&quot;:&quot;/&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;%230a0e1a&quot;,&quot;theme_color&quot;:&quot;%2306b6d4&quot;}">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+    <style>
+        :root{--bg-primary:#0a0e1a;--bg-secondary:#111827;--bg-tertiary:#1f2937;--bg-card:rgba(31,41,55,0.5);--text-primary:#f9fafb;--text-secondary:#9ca3af;--text-muted:#6b7280;--accent:#06b6d4;--accent-hover:#0891b2;--accent-glow:rgba(6,182,212,0.15);--border:rgba(75,85,99,0.3);--success:#10b981;--warning:#f59e0b;--error:#ef4444;--user-bubble:linear-gradient(135deg,#06b6d4,#3b82f6);--ai-bubble:rgba(31,41,55,0.8);--sidebar-w:280px;--header-h:60px;--composer-h:80px}
+        [data-theme="light"]{--bg-primary:#f8fafc;--bg-secondary:#fff;--bg-tertiary:#f1f5f9;--bg-card:rgba(241,245,249,0.8);--text-primary:#0f172a;--text-secondary:#475569;--text-muted:#94a3b8;--border:rgba(203,213,225,0.5);--accent:#0891b2;--accent-hover:#0e7490;--accent-glow:rgba(8,145,178,0.1);--user-bubble:linear-gradient(135deg,#0891b2,#2563eb);--ai-bubble:#fff}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg-primary);color:var(--text-primary);height:100vh;overflow:hidden;transition:background 0.3s,color 0.3s}
+        .app{display:flex;height:100vh}
+        .sidebar{width:var(--sidebar-w);background:var(--bg-secondary);border-right:1px solid var(--border);display:flex;flex-direction:column;transition:transform 0.3s;z-index:100}
+        .sidebar.collapsed{transform:translateX(-100%);position:absolute;height:100%}
+        .sidebar-header{padding:16px;border-bottom:1px solid var(--border)}
+        .new-chat-btn{width:100%;padding:10px 16px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text-primary);cursor:pointer;font-size:14px;display:flex;align-items:center;gap:8px;transition:all 0.2s}
+        .new-chat-btn:hover{background:var(--bg-tertiary);border-color:var(--accent)}
+        .search-box{padding:12px 16px}
+        .search-box input{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;background:var(--bg-primary);color:var(--text-primary);font-size:13px;outline:none}
+        .search-box input:focus{border-color:var(--accent)}
+        .chat-list{flex:1;overflow-y:auto;padding:8px}
+        .chat-item{padding:10px 12px;border-radius:8px;cursor:pointer;margin-bottom:4px;display:flex;align-items:center;gap:10px;transition:all 0.2s}
+        .chat-item:hover{background:var(--bg-tertiary)}
+        .chat-item.active{background:var(--accent-glow);border:1px solid var(--accent)}
+        .chat-item-title{flex:1;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .chat-item-time{font-size:11px;color:var(--text-muted)}
+        .main{flex:1;display:flex;flex-direction:column;min-width:0}
+        .header{height:var(--header-h);padding:0 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);background:var(--bg-secondary)}
+        .menu-btn,.icon-btn{width:36px;height:36px;border:none;border-radius:8px;background:transparent;color:var(--text-primary);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:all 0.2s}
+        .menu-btn:hover,.icon-btn:hover{background:var(--bg-tertiary)}
+        .brand{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+        .brand span{background:linear-gradient(135deg,var(--accent),#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .domain-badge{padding:4px 10px;border-radius:20px;font-size:11px;background:var(--accent-glow);color:var(--accent);border:1px solid var(--accent);white-space:nowrap}
+        .header-actions{margin-left:auto;display:flex;gap:4px}
+        .chat-area{flex:1;overflow-y:auto;padding:20px}
+        .welcome{text-align:center;padding:60px 20px;max-width:600px;margin:0 auto}
+        .welcome h1{font-size:28px;margin-bottom:8px}
+        .welcome h1 span{background:linear-gradient(135deg,var(--accent),#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .welcome p{color:var(--text-secondary);margin-bottom:32px}
+        .suggestions{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+        .suggestion-card{padding:16px;border:1px solid var(--border);border-radius:12px;background:var(--bg-card);cursor:pointer;transition:all 0.2s;text-align:left}
+        .suggestion-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+        .suggestion-card .icon{font-size:20px;margin-bottom:8px}
+        .suggestion-card .text{font-size:13px;color:var(--text-secondary)}
+        .message{display:flex;gap:12px;margin-bottom:20px;animation:fadeIn 0.3s}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .message-avatar{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+        .message.user .message-avatar{background:var(--user-bubble)}
+        .message.assistant .message-avatar{background:var(--bg-tertiary)}
+        .message-content{flex:1;min-width:0}
+        .message-bubble{padding:12px 16px;border-radius:12px;font-size:14px;line-height:1.6;white-space:pre-wrap;word-wrap:break-word}
+        .message.user .message-bubble{background:var(--user-bubble);color:#fff;border-bottom-right-radius:4px}
+        .message.assistant .message-bubble{background:var(--ai-bubble);border:1px solid var(--border);border-bottom-left-radius:4px}
+        .message-meta{display:flex;gap:8px;margin-top:6px;font-size:11px;color:var(--text-muted)}
+        .message-actions{display:flex;gap:4px;margin-top:8px}
+        .action-btn{padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:transparent;color:var(--text-muted);cursor:pointer;font-size:11px;transition:all 0.2s}
+        .action-btn:hover{border-color:var(--accent);color:var(--accent)}
+        .action-btn.active{background:var(--accent-glow);border-color:var(--accent);color:var(--accent)}
+        .composer{padding:16px 20px;border-top:1px solid var(--border);background:var(--bg-secondary)}
+        .composer-inner{max-width:800px;margin:0 auto;display:flex;gap:8px;align-items:flex-end}
+        .composer-input-wrap{flex:1;position:relative}
+        .composer-input{width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;background:var(--bg-primary);color:var(--text-primary);font-size:14px;resize:none;outline:none;min-height:48px;max-height:120px;line-height:1.5}
+        .composer-input:focus{border-color:var(--accent)}
+        .composer-input::placeholder{color:var(--text-muted)}
+        .composer-btns{display:flex;gap:4px}
+        .composer-btn{width:40px;height:40px;border:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:all 0.2s;background:transparent;color:var(--text-secondary)}
+        .composer-btn:hover{background:var(--bg-tertiary);color:var(--text-primary)}
+        .composer-btn.send{background:var(--accent);color:#fff}
+        .composer-btn.send:hover{background:var(--accent-hover)}
+        .composer-btn.send:disabled{opacity:0.5;cursor:not-allowed}
+        .composer-btn.recording{background:var(--error);color:#fff;animation:pulse 1s infinite}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+        .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:none;align-items:center;justify-content:center}
+        .modal-overlay.open{display:flex}
+        .modal{width:90%;max-width:600px;max-height:80vh;background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+        .modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+        .modal-header h2{font-size:18px}
+        .modal-close{background:none;border:none;color:var(--text-secondary);font-size:24px;cursor:pointer}
+        .modal-body{padding:20px;overflow-y:auto;flex:1}
+        .settings-section{margin-bottom:24px}
+        .settings-section h3{font-size:14px;color:var(--text-muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px}
+        .setting-item{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
+        .setting-item:last-child{border-bottom:none}
+        .setting-label{font-size:14px}
+        .setting-desc{font-size:12px;color:var(--text-muted);margin-top:2px}
+        .toggle{width:44px;height:24px;border-radius:12px;background:var(--bg-tertiary);border:none;cursor:pointer;position:relative;transition:background 0.2s}
+        .toggle.active{background:var(--accent)}
+        .toggle::after{content:'';position:absolute;width:20px;height:20px;border-radius:50%;background:#fff;top:2px;left:2px;transition:transform 0.2s}
+        .toggle.active::after{transform:translateX(20px)}
+        .domain-search{margin-bottom:16px}
+        .domain-search input{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);font-size:14px;outline:none}
+        .domain-category{margin-bottom:20px}
+        .domain-category-title{font-size:13px;color:var(--text-muted);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+        .domain-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+        .domain-chip{padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:8px}
+        .domain-chip:hover{border-color:var(--accent)}
+        .domain-chip.active{background:var(--accent-glow);border-color:var(--accent)}
+        .domain-chip .icon{font-size:16px}
+        .domain-chip .name{font-size:13px}
+        .theme-options{display:flex;gap:8px}
+        .theme-btn{flex:1;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);cursor:pointer;font-size:13px;transition:all 0.2s}
+        .theme-btn.active{border-color:var(--accent);background:var(--accent-glow)}
+        .toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:8px;background:var(--bg-tertiary);color:var(--text-primary);font-size:13px;z-index:300;animation:fadeIn 0.3s;border:1px solid var(--border)}
+        .typing-indicator{display:flex;gap:4px;padding:12px 16px}
+        .typing-dot{width:8px;height:8px;border-radius:50%;background:var(--text-muted);animation:typing 1.4s infinite}
+        .typing-dot:nth-child(2){animation-delay:0.2s}
+        .typing-dot:nth-child(3){animation-delay:0.4s}
+        @keyframes typing{0%,60%,100%{opacity:0.3}30%{opacity:1}}
+        @media(max-width:768px){.sidebar{position:absolute;height:100%}.suggestions{grid-template-columns:1fr}.domain-grid{grid-template-columns:1fr}.header{padding:0 12px}.brand{font-size:14px}.domain-badge{display:none}}
+        ::-webkit-scrollbar{width:6px}
+        ::-webkit-scrollbar-track{background:transparent}
+        ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+        ::-webkit-scrollbar-thumb:hover{background:var(--text-muted)}
+    </style>
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <button class="new-chat-btn" onclick="createNewChat()">➕ New Chat</button>
+            </div>
+            <div class="search-box">
+                <input type="text" placeholder="Search conversations..." id="searchInput" oninput="searchConversations(this.value)">
+            </div>
+            <div class="chat-list" id="chatList"></div>
+        </aside>
+        <main class="main">
+            <header class="header">
+                <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+                <div class="brand">🧠 <span>NeuroSeek AI</span></div>
+                <div class="domain-badge" id="domainBadge">🌐 Universal Expert</div>
+                <div class="header-actions">
+                    <button class="icon-btn" onclick="toggleTheme()" title="Theme">🌓</button>
+                    <button class="icon-btn" onclick="openSettings()" title="Settings">⚙️</button>
+                </div>
+            </header>
+            <div class="chat-area" id="chatArea">
+                <div class="welcome" id="welcomeScreen">
+                    <h1>🧠 <span>NeuroSeek AI</span></h1>
+                    <p>Universal Intelligence. Expert Knowledge. Verified Information.</p>
+                    <div class="suggestions" id="suggestions"></div>
+                </div>
+                <div id="messages"></div>
+            </div>
+            <div class="composer">
+                <div class="composer-inner">
+                    <div class="composer-input-wrap">
+                        <textarea class="composer-input" id="messageInput" placeholder="Ask anything..." rows="1" oninput="autoResize(this)" onkeydown="handleKeyDown(event)"></textarea>
+                    </div>
+                    <div class="composer-btns">
+                        <button class="composer-btn" id="micBtn" onclick="toggleVoice()" title="Voice Input">🎤</button>
+                        <button class="composer-btn" onclick="document.getElementById('fileInput').click()" title="Attach File">📎</button>
+                        <button class="composer-btn send" id="sendBtn" onclick="sendMessage()" title="Send">➤</button>
+                    </div>
+                    <input type="file" id="fileInput" style="display:none" onchange="handleFileSelect(event)">
+                </div>
+            </div>
+        </main>
+    </div>
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>⚙️ Settings</h2>
+                <button class="modal-close" onclick="closeSettings()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h3>Appearance</h3>
+                    <div class="setting-item">
+                        <div><div class="setting-label">Theme</div><div class="setting-desc">Choose your preferred theme</div></div>
+                        <div class="theme-options">
+                            <button class="theme-btn" onclick="setTheme('light')">☀️ Light</button>
+                            <button class="theme-btn" onclick="setTheme('dark')">🌙 Dark</button>
+                            <button class="theme-btn" onclick="setTheme('system')">💻 System</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>Expert Domain</h3>
+                    <div class="domain-search"><input type="text" placeholder="Search domains..." id="domainSearch" oninput="searchDomains(this.value)"></div>
+                    <div id="domainList"></div>
+                </div>
+                <div class="settings-section">
+                    <h3>Chat Settings</h3>
+                    <div class="setting-item"><div><div class="setting-label">Show Citations</div><div class="setting-desc">Display source references</div></div><button class="toggle active" id="toggleCitations" onclick="toggleSetting('citations')"></button></div>
+                    <div class="setting-item"><div><div class="setting-label">Web Verification</div><div class="setting-desc">Verify facts using web search</div></div><button class="toggle active" id="toggleWeb" onclick="toggleSetting('web_verification')"></button></div>
+                    <div class="setting-item"><div><div class="setting-label">Enter to Send</div><div class="setting-desc">Press Enter to send message</div></div><button class="toggle active" id="toggleEnter" onclick="toggleSetting('enter_to_send')"></button></div>
+                </div>
+                <div class="settings-section">
+                    <h3>Voice</h3>
+                    <div class="setting-item"><div><div class="setting-label">Voice Input</div><div class="setting-desc">Enable microphone input</div></div><button class="toggle" id="toggleVoice" onclick="toggleSetting('voice_input')"></button></div>
+                </div>
+                <div class="settings-section">
+                    <h3>Memory</h3>
+                    <div class="setting-item"><div><div class="setting-label">Learning Memory</div><div class="setting-desc" id="memoryCount">0 corrections learned</div></div><button class="action-btn" onclick="clearMemory()">Clear</button></div>
+                </div>
+                <div class="settings-section">
+                    <h3>About</h3>
+                    <div class="setting-item"><div><div class="setting-label">NeuroSeek AI</div><div class="setting-desc">Version 1.0.0 — Universal Expert AI</div></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // ===== DOMAIN CONFIGURATION =====
+        const DOMAINS = {
+            universal:{id:"universal",name:"Universal Expert",category:"universal",icon:"🌐",description:"Cross-domain expert",suggested_prompts:["What is quantum computing?","How does the stock market work?","Explain climate change","What is AI?"]},
+            "aerospace-engineering":{id:"aerospace-engineering",name:"Aerospace Engineering",category:"engineering",icon:"🚀",description:"Aircraft, spacecraft, propulsion",suggested_prompts:["How do jet engines work?","Explain orbital mechanics","What is the future of space travel?","How do wings generate lift?"]},
+            "material-science":{id:"material-science",name:"Material Science",category:"engineering",icon:"⚗️",description:"Properties, structure, processing",suggested_prompts:["What makes graphene special?","Explain steel vs iron","How do shape-memory alloys work?","What are metamaterials?"]},
+            "civil-engineering":{id:"civil-engineering",name:"Civil Engineering",category:"engineering",icon:"🏗️",description:"Infrastructure, structures, construction",suggested_prompts:["How do skyscrapers withstand earthquakes?","Cement vs concrete","Strongest building material?","How are bridges designed?"]},
+            "robotics-automation":{id:"robotics-automation",name:"Robotics & Automation",category:"engineering",icon:"🤖",description:"Robot design, control systems",suggested_prompts:["How do self-driving cars work?","Explain PID control","Future of robotics?","How do robots navigate?"]},
+            "electrical-engineering":{id:"electrical-engineering",name:"Electrical Engineering",category:"engineering",icon:"⚡",description:"Circuits, power, electronics",suggested_prompts:["How does a transformer work?","AC vs DC power","Future of energy storage?","How do solar panels work?"]},
+            "clinical-medicine":{id:"clinical-medicine",name:"Clinical Medicine",category:"health",icon:"🏥",description:"Diagnosis, treatment, pharmacology",suggested_prompts:["Symptoms of diabetes?","How do antibiotics work?","Viral vs bacterial infections?","What is hypertension?"]},
+            "genomics-biotech":{id:"genomics-biotech",name:"Genomics & Biotech",category:"health",icon:"🧬",description:"Genetics, molecular biology",suggested_prompts:["How does CRISPR work?","What is the human genome project?","Explain DNA replication","What is personalized medicine?"]},
+            "public-health":{id:"public-health",name:"Public Health",category:"health",icon:"🌍",description:"Epidemiology, health policy",suggested_prompts:["How do vaccines work?","What is herd immunity?","Social determinants of health?","How to prepare for pandemics?"]},
+            "nutrition-science":{id:"nutrition-science",name:"Nutrition Science",category:"health",icon:"🥗",description:"Nutrients, diet, metabolism",suggested_prompts:["What is a balanced diet?","How does protein help muscles?","Benefits of intermittent fasting?","How much water to drink?"]},
+            "capital-markets":{id:"capital-markets",name:"Capital Markets",category:"financial",icon:"📈",description:"Stocks, bonds, trading",suggested_prompts:["How does the stock market work?","Explain portfolio diversification","Stocks vs bonds?","How do interest rates affect markets?"]},
+            "risk-modeling":{id:"risk-modeling",name:"Risk Modeling",category:"financial",icon:"📊",description:"Risk assessment, VaR",suggested_prompts:["What is Value at Risk?","How do banks measure risk?","Explain Monte Carlo simulation","What is stress testing?"]},
+            "digital-assets":{id:"digital-assets",name:"Digital Assets",category:"financial",icon:"₿",description:"Crypto, blockchain, DeFi",suggested_prompts:["How does blockchain work?","What is DeFi?","Bitcoin vs Ethereum?","Risks of crypto investing?"]},
+            "corporate-finance":{id:"corporate-finance",name:"Corporate Finance",category:"financial",icon:"💼",description:"Capital structure, valuation",suggested_prompts:["How to value a company?","Explain WACC","Equity vs debt financing?","How do M&A work?"]},
+            "network-security":{id:"network-security",name:"Network Security",category:"cyber-security",icon:"🛡️",description:"Firewalls, IDS/IPS, defense",suggested_prompts:["How do firewalls work?","What is zero trust?","Explain VPN simply","How do DDoS attacks work?"]},
+            "cryptography":{id:"cryptography",name:"Cryptography",category:"cyber-security",icon:"🔐",description:"Encryption, hashing, signatures",suggested_prompts:["How does encryption work?","Public key cryptography?","Hashing vs encryption?","How does HTTPS work?"]},
+            "digital-forensics":{id:"digital-forensics",name:"Digital Forensics",category:"cyber-security",icon:"🔍",description:"Evidence collection, analysis",suggested_prompts:["How is digital evidence collected?","What is chain of custody?","Recover deleted files?","What tools do forensic experts use?"]},
+            "climate-science":{id:"climate-science",name:"Climate Science",category:"environmental",icon:"🌡️",description:"Climate systems, global warming",suggested_prompts:["How do we know climate change is real?","Explain greenhouse effect","What are climate feedback loops?","Latest IPCC report?"]},
+            "environmental-engineering":{id:"environmental-engineering",name:"Environmental Engineering",category:"environmental",icon:"🏭",description:"Pollution control, waste management",suggested_prompts:["How do water treatment plants work?","What is carbon capture?","How is air pollution measured?","Solutions to plastic pollution?"]},
+            "energy-grid":{id:"energy-grid",name:"Energy & Grid Systems",category:"environmental",icon:"🔋",description:"Power generation, smart grids",suggested_prompts:["How do smart grids work?","Future of renewable energy?","How is electricity transmitted?","Grid-scale energy storage?"]},
+            "ecology-conservation":{id:"ecology-conservation",name:"Ecology & Conservation",category:"environmental",icon:"🌿",description:"Ecosystems, biodiversity",suggested_prompts:["Why is biodiversity important?","How do ecosystems recover?","Effective conservation strategies?","Habitat fragmentation effects?"]},
+            history:{id:"history",name:"History",category:"humanities",icon:"📜",description:"World history, civilizations",suggested_prompts:["Fall of the Roman Empire?","Industrial Revolution impact?","Causes of World War I?","How did ancient civilizations develop?"]},
+            philosophy:{id:"philosophy",name:"Philosophy",category:"humanities",icon:"🤔",description:"Ethics, logic, metaphysics",suggested_prompts:["What is the meaning of life?","Utilitarianism vs deontology?","What is the trolley problem?","How do we know what is real?"]},
+            linguistics:{id:"linguistics",name:"Linguistics",category:"humanities",icon:"🗣️",description:"Language structure, phonetics",suggested_prompts:["How do languages evolve?","Phonetics vs phonology?","How many languages exist?","What makes human language unique?"]},
+            "law-policy":{id:"law-policy",name:"Law & Policy",category:"humanities",icon:"⚖️",description:"Legal systems, regulations",suggested_prompts:["Civil vs criminal law?","How do international treaties work?","Rights if arrested?","How are laws made?"]},
+            "behavioral-health":{id:"behavioral-health",name:"Behavioral Health",category:"behavioral",icon:"🧠",description:"Mental health, therapy",suggested_prompts:["What is CBT?","How does stress affect the body?","Signs of burnout?","How to improve mental wellbeing?"]},
+            "organizational-psychology":{id:"organizational-psychology",name:"Organizational Psychology",category:"behavioral",icon:"🏢",description:"Workplace behavior, leadership",suggested_prompts:["What makes a good leader?","How to build effective teams?","What is organizational culture?","How to manage workplace stress?"]},
+            "decision-science":{id:"decision-science",name:"Decision Science",category:"behavioral",icon:"🎯",description:"Decision theory, behavioral economics",suggested_prompts:["Common decision-making biases?","Explain game theory","How do nudges work?","Risk vs uncertainty?"]},
+            "quantum-computing":{id:"quantum-computing",name:"Quantum Computing",category:"advanced-futuristic",icon:"⚛️",description:"Qubits, quantum algorithms",suggested_prompts:["What is a qubit?","Explain quantum entanglement","How does a quantum circuit work?","Explain VQE vs QAOA"]},
+            "space-resource-mining":{id:"space-resource-mining",name:"Space Resource Mining",category:"advanced-futuristic",icon:"🌑",description:"Asteroid mining, lunar resources",suggested_prompts:["What resources on asteroids?","How would lunar mining work?","What is ISRU?","Is space mining viable?"]},
+            nanotechnology:{id:"nanotechnology",name:"Nanotechnology",category:"advanced-futuristic",icon:"🔬",description:"Nanomaterials, nanomedicine",suggested_prompts:["What is nanotechnology?","Nanoparticles in medicine?","What is molecular manufacturing?","Risks of nanotechnology?"]},
+            "agi-ai-ethics":{id:"agi-ai-ethics",name:"AGI & AI Ethics",category:"advanced-futuristic",icon:"🧬",description:"AI safety, alignment, ethics",suggested_prompts:["What is the alignment problem?","How to ensure AI safety?","Ethical implications of AGI?","How to prevent AI bias?"]},
+            "synthetic-biology":{id:"synthetic-biology",name:"Synthetic Biology",category:"advanced-futuristic",icon:"🧪",description:"Engineered organisms, bio-design",suggested_prompts:["What is synthetic biology?","How do genetic circuits work?","What can engineered organisms produce?","Risks of synthetic biology?"]}
+        };
+
+        const CATEGORIES = {universal:{name:"Universal",icon:"🌐"},engineering:{name:"Engineering",icon:"⚙️"},health:{name:"Health",icon:"🏥"},financial:{name:"Financial",icon:"💰"},"cyber-security":{name:"Cyber Security",icon:"🔒"},environmental:{name:"Environmental",icon:"🌍"},humanities:{name:"Humanities",icon:"📚"},behavioral:{name:"Behavioral",icon:"🧠"},"advanced-futuristic":{name:"Advanced & Futuristic",icon:"🚀"}};
+
+        // ===== STATE =====
+        let currentDomain = 'universal';
+        let currentConversationId = null;
+        let conversations = JSON.parse(localStorage.getItem('neuroseek_conversations') || '[]');
+        let isRecording = false;
+        let recognition = null;
+        let settings = JSON.parse(localStorage.getItem('neuroseek_settings') || '{"theme":"dark","citations":true,"web_verification":true,"enter_to_send":true,"voice_input":false}');
+        let learningMemory = JSON.parse(localStorage.getItem('neuroseek_memory') || '[]');
+
+        // ===== INIT =====
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTheme();
+            renderDomains();
+            renderConversations();
+            loadSettings();
+            updateSuggestions();
+            initVoice();
+        });
+
+        // ===== THEME =====
+        function loadTheme() {
+            const saved = localStorage.getItem('neuroseek_theme') || 'dark';
+            setTheme(saved);
+        }
+        function setTheme(theme) {
+            settings.theme = theme;
+            localStorage.setItem('neuroseek_theme', theme);
+            if (theme === 'system') {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+            } else {
+                document.documentElement.setAttribute('data-theme', theme);
+            }
+            document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+            if(event) event.target.classList.add('active');
+        }
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme');
+            setTheme(current === 'dark' ? 'light' : 'dark');
+        }
+
+        // ===== DOMAINS =====
+        function renderDomains(domainList) {
+            const container = document.getElementById('domainList');
+            const categories = {};
+            domainList.forEach(d => {
+                if (!categories[d.category]) categories[d.category] = [];
+                categories[d.category].push(d);
+            });
+            let html = '';
+            for (const [cat, doms] of Object.entries(categories)) {
+                const catNames = {universal:'🌐 Universal',engineering:'⚙️ Engineering',health:'🏥 Health',financial:'💰 Financial','cyber-security':'🔒 Cyber Security',environmental:'🌍 Environmental',humanities:'📚 Humanities',behavioral:'🧠 Behavioral','advanced-futuristic':'🚀 Advanced & Futuristic'};
+                html += `<div class="domain-category"><div class="domain-category-title">${catNames[cat]||cat}</div><div class="domain-grid">`;
+                doms.forEach(d => {
+                    html += `<div class="domain-chip ${d.id===currentDomain?'active':''}" onclick="selectDomain('${d.id}')"><span class="icon">${d.icon}</span><span class="name">${d.name}</span></div>`;
+                });
+                html += '</div></div>';
+            }
+            container.innerHTML = html;
+        }
+        function searchDomains(query) {
+            if (!query) { renderDomains(Object.values(DOMAINS)); return; }
+            const filtered = Object.values(DOMAINS).filter(d => d.name.toLowerCase().includes(query.toLowerCase()) || d.description.toLowerCase().includes(query.toLowerCase()));
+            renderDomains(filtered);
+        }
+        function selectDomain(domainId) {
+            currentDomain = domainId;
+            const domain = DOMAINS[domainId];
+            if (domain) document.getElementById('domainBadge').textContent = `${domain.icon} ${domain.name}`;
+            renderDomains(Object.values(DOMAINS));
+            updateSuggestions();
+            showToast(`Domain changed to ${domain?.name||domainId}`);
+        }
+
+        // ===== CONVERSATIONS =====
+        function renderConversations() {
+            const container = document.getElementById('chatList');
+            container.innerHTML = conversations.map(c => `
+                <div class="chat-item ${c.id===currentConversationId?'active':''}" onclick="openConversation('${c.id}')">
+                    <span>💬</span><span class="chat-item-title">${c.title}</span><span class="chat-item-time">${new Date(c.updated_at).toLocaleDateString()}</span>
+                </div>`).join('');
+        }
+        function createNewChat() {
+            currentConversationId = null;
+            document.getElementById('messages').innerHTML = '';
+            document.getElementById('welcomeScreen').style.display = 'block';
+            document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
+            updateSuggestions();
+        }
+        function openConversation(convId) {
+            currentConversationId = convId;
+            document.getElementById('welcomeScreen').style.display = 'none';
+            renderConversations();
+            const conv = conversations.find(c => c.id === convId);
+            if (conv) {
+                const container = document.getElementById('messages');
+                container.innerHTML = conv.messages.map(m => createMessageHTML(m)).join('');
+                scrollToBottom();
+            }
+        }
+        function searchConversations(query) {
+            if (!query) { renderConversations(); return; }
+            const filtered = conversations.filter(c => c.title.toLowerCase().includes(query.toLowerCase()) || c.messages.some(m => m.content.toLowerCase().includes(query.toLowerCase())));
+            const container = document.getElementById('chatList');
+            container.innerHTML = filtered.map(c => `<div class="chat-item ${c.id===currentConversationId?'active':''}" onclick="openConversation('${c.id}')"><span>💬</span><span class="chat-item-title">${c.title}</span><span class="chat-item-time">${new Date(c.updated_at).toLocaleDateString()}</span></div>`).join('');
+        }
+
+        // ===== MESSAGES =====
+        function createMessageHTML(m) {
+            const isUser = m.role === 'user';
+            return `<div class="message ${m.role}"><div class="message-avatar">${isUser?'👤':'🧠'}</div><div class="message-content"><div class="message-bubble">${formatMessage(m.content)}</div>${!isUser?`<div class="message-meta"><span>Domain: ${m.domain||'universal'}</span></div><div class="message-actions"><button class="action-btn" onclick="copyMessage(this)">📋 Copy</button><button class="action-btn" onclick="thumbsUp(this)">👍</button><button class="action-btn" onclick="thumbsDown(this)">👎</button></div>`:''}</div></div>`;
+        }
+        function formatMessage(text) {
+            return text.replace(/```([\s\S]*?)```/g,'<pre style="background:var(--bg-primary);padding:12px;border-radius:8px;overflow-x:auto;margin:8px 0;"><code>$1</code></pre>').replace(/`([^`]+)`/g,'<code style="background:var(--bg-primary);padding:2px 6px;border-radius:4px;">$1</code>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+        }
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message) return;
+            document.getElementById('welcomeScreen').style.display = 'none';
+            input.value = ''; input.style.height = 'auto';
+            const userMsg = {role:'user',content:message,domain:currentDomain};
+            const container = document.getElementById('messages');
+            container.insertAdjacentHTML('beforeend',createMessageHTML(userMsg));
+            scrollToBottom();
+            const typingId = 'typing-'+Date.now();
+            container.insertAdjacentHTML('beforeend',`<div class="message assistant" id="${typingId}"><div class="message-avatar">🧠</div><div class="message-content"><div class="message-bubble"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div></div>`);
+            scrollToBottom();
+
+            // Retry mechanism ke saath API call
+            let retries = 3;
+            let success = false;
+            let lastError = null;
+
+            while (retries > 0 && !success) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+                    const res = await fetch('/api/chat', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({message: message, domain_id: currentDomain, conversation_id: currentConversationId}),
+                        signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+
+                    if (!res.ok) {
+                        throw new Error('Server error: ' + res.status);
+                    }
+
+                    const data = await res.json();
+                    document.getElementById(typingId).remove();
+                    container.insertAdjacentHTML('beforeend',createMessageHTML({role:'assistant',content:data.response,domain:data.domain_used||currentDomain}));
+                    scrollToBottom();
+                    currentConversationId = data.conversation_id;
+                    saveConversation(message, data.response);
+                    success = true;
+                } catch(err) {
+                    lastError = err;
+                    retries--;
+                    if (retries > 0) {
+                        // 2 second wait before retry
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
+                }
+            }
+
+            if (!success) {
+                document.getElementById(typingId).remove();
+                const errorMsg = lastError ? lastError.message : 'Unknown error';
+                container.insertAdjacentHTML('beforeend',createMessageHTML({role:'assistant',content:'⚠️ Connection Error: ' + errorMsg + '\n\nServer restart ho sakta hai. Page refresh karein.',domain:currentDomain}));
+                scrollToBottom();
+            }
+        }
+        function scrollToBottom() { const area = document.getElementById('chatArea'); area.scrollTop = area.scrollHeight; }
+
+        // ===== LOCAL AI ENGINE =====
+        function generateLocalResponse(input, domainId) {
+            const domain = DOMAINS[domainId] || DOMAINS.universal;
+            const lower = input.toLowerCase();
+            // Check learning memory
+            for (const mem of learningMemory) {
+                if (mem.domain === domainId && mem.content.toLowerCase().includes(lower)) {
+                    return mem.correction || mem.content;
+                }
+            }
+            // Domain-specific responses
+            const responses = getDomainResponse(lower, domainId);
+            if (responses) return responses;
+            // Universal fallback
+            return `🌐 **Universal Expert Response**\n\nAapne poochha: "${input}"\n\n**Domain:** ${domain.icon} ${domain.name}\n\nMain is sawal ka accurate jawab dene ki koshish karunga. Ye domain mein specialized knowledge use kar raha hoon.\n\n💡 **Tip:** Aap Settings mein specific domain select kar sakte hain aur main aur behtar jawab dunga!\n\n---\n🧠 **Expert Domain:** ${domain.icon} ${domain.name}`;
+        }
+        function getDomainResponse(input, domainId) {
+            const r = {
+                "quantum-computing": input.includes("qubit") ? "⚛️ **Qubit — Quantum Bit**\n\nQubit quantum computing ka basic unit hai.\n\n**Key Properties:**\n- **Superposition:** Qubit 0 aur 1 dono states mein ek saath ho sakta hai\n- **Entanglement:** Do qubits ek dusre se linked ho sakte hain\n- **Measurement:** Qubit ko measure karna state ko collapse kar deta hai\n\n**Classical Bit vs Qubit:**\n| Property | Classical | Qubit |\n|----------|-----------|-------|\n| State | 0 ya 1 | 0, 1, ya superposition |\n| Info | 1 bit | Infinite states |\n\n**Current Status:** IBM, Google 1000+ qubit processors bana chuki hain." : "⚛️ **Quantum Computing Expert**\n\nQuantum computing ek revolutionary technology hai jo quantum mechanics ko use karta hai.\n\n**Key Topics:** Qubits, Superposition, Entanglement, Quantum Gates, NISQ Era\n\nAap specifically kya jaanna chahte hain?",
+                "aerospace-engineering": "🚀 **Aerospace Engineering Expert**\n\nAerospace engineering aircraft aur spacecraft dono ko cover karta hai.\n\n**Key Areas:** Aerodynamics, Propulsion, Structural Design, Flight Mechanics, Orbital Mechanics\n\nAap kis topic ke baare mein jaanna chahte hain?",
+                "electrical-engineering": "⚡ **Electrical Engineering Expert**\n\nElectrical engineering power generation se lekar electronics tak cover karti hai.\n\n**Key Areas:** Circuit Analysis, Power Systems, Electronics, Signal Processing, Control Systems\n\nAap kis topic mein interested hain?",
+                "robotics-automation": "🤖 **Robotics & Automation Expert**\n\nRobotics engineering mechanical, electrical, computer science ko combine karti hai.\n\n**Key Areas:** Kinematics, Dynamics, Control Systems, Sensors, Path Planning, SLAM\n\nAap specifically kya jaanna chahte hain?",
+                "clinical-medicine": "🏥 **Clinical Medicine Expert**\n\n⚠️ **Disclaimer:** Ye information educational purposes ke liye hai. Kisi bhi medical condition ke liye licensed healthcare provider se consult karein.\n\n**Key Areas:** Diagnosis, Treatment, Pharmacology, Preventive Medicine\n\nAap kis condition ke baare mein jaanna chahte hain?",
+                "capital-markets": "📈 **Capital Markets Expert**\n\n⚠️ **Disclaimer:** Ye information educational purposes ke liye hai. Investment decisions se pehle licensed financial advisor se consult karein.\n\n**Key Areas:** Stock Markets, Bond Markets, Portfolio Theory, Asset Pricing\n\nAap kis topic mein interested hain?",
+                "cryptography": "🔐 **Cryptography Expert**\n\nCryptography data ko secure rakhne ka science hai.\n\n**Key Areas:** Symmetric/Asymmetric Encryption, Hashing, Digital Signatures, PKI\n\nAap kis topic mein interested hain?",
+                "climate-science": "🌡️ **Climate Science Expert**\n\nClimate science Earth's climate system ko study karta hai.\n\n**Key Areas:** Atmospheric Science, Oceanography, Climate Modeling, Greenhouse Effect\n\nAap kis topic mein interested hain?",
+                "default": null
+            };
+            return r[domainId] || r.default;
+        }
+
+        // ===== PERSISTENCE =====
+        function saveConversation(userMsg, aiResponse) {
+            if (!currentConversationId) {
+                currentConversationId = 'conv-' + Date.now();
+                conversations.unshift({id:currentConversationId,title:userMsg.substring(0,30),domain_id:currentDomain,created_at:new Date().toISOString(),updated_at:new Date().toISOString(),messages:[]});
+            }
+            const conv = conversations.find(c => c.id === currentConversationId);
+            if (conv) {
+                conv.messages.push({role:'user',content:userMsg,domain:currentDomain});
+                conv.messages.push({role:'assistant',content:aiResponse,domain:currentDomain});
+                conv.updated_at = new Date().toISOString();
+            }
+            localStorage.setItem('neuroseek_conversations', JSON.stringify(conversations));
+            renderConversations();
+        }
+
+        // ===== VOICE =====
+        function initVoice() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = true;
+                recognition.lang = 'en-US';
+                recognition.onresult = (event) => {
+                    const transcript = Array.from(event.results).map(r => r[0].transcript).join('');
+                    document.getElementById('messageInput').value = transcript;
+                };
+                recognition.onend = () => { isRecording = false; document.getElementById('micBtn').classList.remove('recording'); };
+                recognition.onerror = (e) => { isRecording = false; document.getElementById('micBtn').classList.remove('recording'); showToast('Voice error: ' + e.error); };
+            }
+        }
+        function toggleVoice() {
+            if (!recognition) { showToast('Voice not supported'); return; }
+            if (isRecording) { recognition.stop(); isRecording = false; document.getElementById('micBtn').classList.remove('recording'); }
+            else { recognition.start(); isRecording = true; document.getElementById('micBtn').classList.add('recording'); }
+        }
+
+        // ===== SETTINGS =====
+        function openSettings() { document.getElementById('settingsModal').classList.add('open'); loadMemoryCount(); }
+        function closeSettings() { document.getElementById('settingsModal').classList.remove('open'); }
+        function toggleSetting(key) {
+            settings[key] = !settings[key];
+            const toggleMap = {citations:'toggleCitations',web_verification:'toggleWeb',enter_to_send:'toggleEnter',voice_input:'toggleVoice'};
+            const btn = document.getElementById(toggleMap[key]);
+            if (btn) btn.classList.toggle('active', settings[key]);
+            localStorage.setItem('neuroseek_settings', JSON.stringify(settings));
+        }
+        function loadSettings() {
+            document.getElementById('toggleCitations').classList.toggle('active', settings.citations);
+            document.getElementById('toggleWeb').classList.toggle('active', settings.web_verification);
+            document.getElementById('toggleEnter').classList.toggle('active', settings.enter_to_send);
+            document.getElementById('toggleVoice').classList.toggle('active', settings.voice_input);
+        }
+        function loadMemoryCount() { document.getElementById('memoryCount').textContent = learningMemory.length + ' corrections learned'; }
+        function clearMemory() { learningMemory = []; localStorage.setItem('neuroseek_memory', JSON.stringify(learningMemory)); loadMemoryCount(); showToast('Memory cleared'); }
+
+        // ===== SUGGESTIONS =====
+        function updateSuggestions() {
+            const domain = DOMAINS[currentDomain];
+            const prompts = domain?.suggested_prompts || ["What is quantum computing?","How does the stock market work?","Explain climate change","What is AI?"];
+            const icons = ['💡','🔬','📊','🌍'];
+            document.getElementById('suggestions').innerHTML = prompts.map((p,i) => `<div class="suggestion-card" onclick="useSuggestion('${p.replace(/'/g,"\\'")}')"><div class="icon">${icons[i%icons.length]}</div><div class="text">${p}</div></div>`).join('');
+        }
+        function useSuggestion(text) { document.getElementById('messageInput').value = text; sendMessage(); }
+
+        // ===== UTILITIES =====
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+        function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; }
+        function handleKeyDown(e) { if (e.key === 'Enter' && !e.shiftKey && settings.enter_to_send) { e.preventDefault(); sendMessage(); } }
+        function copyMessage(btn) { const bubble = btn.closest('.message-content').querySelector('.message-bubble'); navigator.clipboard.writeText(bubble.innerText); showToast('Copied!'); }
+        function thumbsUp(btn) { btn.classList.add('active'); showToast('Thanks! 👍'); }
+        function thumbsDown(btn) { btn.classList.add('active'); showToast('Thanks for feedback!'); }
+        function handleFileSelect(e) { const file = e.target.files[0]; if (file) showToast('File: ' + file.name); }
+        function showToast(msg) { const toast = document.createElement('div'); toast.className = 'toast'; toast.textContent = msg; document.body.appendChild(toast); setTimeout(() => toast.remove(), 3000); }
+    </script>
+</body>
+</html>

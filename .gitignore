@@ -1,0 +1,96 @@
+# NeuroSeek AI - .gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Docker
+.docker/
+
+# Backend specific
+backend/models/
+backend/data/
+backend/*.apk
+
+# Frontend
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.turbo/
+frontend/node_modules/
+frontend/*.apk
+frontend/android/app/build/
+frontend/android/.gradle/
+frontend/android/local.properties
+frontend/android/gradle.properties
+
+# Capacitor
+frontend/android/capacitor-cordova-android-plugins/
+
+# IDE specific
+*.iml
+
+# Testing
+coverage/
+.nyc_output/
+
+# Misc
+*.pem
+.vercel
+.netlify

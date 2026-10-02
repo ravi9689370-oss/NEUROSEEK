@@ -1,0 +1,217 @@
+version: '3.8'
+
+services:
+  # PostgreSQL with pgvector
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: neuroseek-postgres
+    environment:
+      POSTGRES_DB: neuroseek
+      POSTGRES_USER: neuroseek
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U neuroseek -d neuroseek"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
+
+  # Redis for caching and Celery
+  redis:
+    image: redis:7-alpine
+    container_name: neuroseek-redis
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MinIO for model/artifact storage
+  minio:
+    image: minio/minio:latest
+    container_name: neuroseek-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # Ollama for model serving
+  ollama:
+    image: ollama/ollama:latest
+    container_name: neuroseek-ollama
+    volumes:
+      - ollama_data:/root/.ollama
+      - ./models:/models:ro
+    ports:
+      - "11434:11434"
+    environment:
+      OLLAMA_KEEP_ALIVE: 5m
+      OLLAMA_NUM_PARALLEL: 3
+      OLLAMA_MAX_LOADED_MODELS: 3
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: neuroseek-backend
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://neuroseek:${POSTGRES_PASSWORD:-changeme}@postgres:5432/neuroseek
+      - REDIS_URL=redis://redis:6379/0
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minioadmin}
+      - OLLAMA_HOST=http://ollama:11434
+      - PYTHONPATH=/app
+    volumes:
+      - ./backend/app:/app/app:ro
+      - ./backend/config.yaml:/app/config.yaml:ro
+      - ./models:/models:ro
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+        limits:
+          memory: 8G
+
+  # Celery worker for training
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: neuroseek-worker
+    command: celery -A app.workers.celery_app worker -l info -Q training,inference,evaluation --concurrency=1
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://neuroseek:${POSTGRES_PASSWORD:-changeme}@postgres:5432/neuroseek
+      - REDIS_URL=redis://redis:6379/1
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minioadmin}
+      - OLLAMA_HOST=http://ollama:11434
+      - PYTHONPATH=/app
+    volumes:
+      - ./backend/app:/app/app:ro
+      - ./backend/config.yaml:/app/config.yaml:ro
+      - ./models:/models:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+        limits:
+          memory: 16G
+
+  # Celery beat for scheduling
+  scheduler:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: neuroseek-scheduler
+    command: celery -A app.workers.celery_app beat -l info --scheduler celery.beat.PersistentScheduler
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://neuroseek:${POSTGRES_PASSWORD:-changeme}@postgres:5432/neuroseek
+      - REDIS_URL=redis://redis:6379/1
+    volumes:
+      - ./backend/app:/app/app:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Flower for Celery monitoring
+  flower:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: neuroseek-flower
+    command: celery -A app.workers.celery_app flower --port=5555
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://neuroseek:${POSTGRES_PASSWORD:-changeme}@postgres:5432/neuroseek
+      - REDIS_URL=redis://redis:6379/1
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: neuroseek-frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8000/api/v1
+      - NEXT_PUBLIC_WS_URL=ws://backend:8000/api/v1
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  ollama_data:
+
+networks:
+  default:
+    name: neuroseek-network

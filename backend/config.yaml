@@ -1,0 +1,231 @@
+# NeuroSeek Backend Configuration
+# Copy to config.yaml and modify for your environment
+
+app:
+  name: "NeuroSeek AI"
+  version: "0.1.0"
+  debug: false
+  host: "0.0.0.0"
+  port: 8000
+  cors_origins:
+    - "http://localhost:3000"
+    - "http://localhost:8080"
+  api_prefix: "/api/v1"
+
+database:
+  url: "postgresql+asyncpg://neuroseek:changeme@localhost:5432/neuroseek"
+  pool_size: 20
+  max_overflow: 10
+  pool_timeout: 30
+  echo: false
+
+redis:
+  url: "redis://localhost:6379/0"
+  max_connections: 50
+  decode_responses: true
+
+minio:
+  endpoint: "localhost:9000"
+  access_key: "minioadmin"
+  secret_key: "minioadmin"
+  secure: false
+  bucket: "neuroseek-models"
+
+ollama:
+  host: "http://localhost:11434"
+  timeout: 120
+  max_parallel: 3
+  default_model: "llama3.1:8b"
+  keep_alive: "5m"
+
+auth:
+  secret_key: "CHANGE_ME_IN_PRODUCTION_USE_STRONG_RANDOM_KEY"
+  algorithm: "HS256"
+  access_token_expire_minutes: 1440  # 24 hours
+  refresh_token_expire_days: 30
+
+inference:
+  # Model routing configuration
+  routing:
+    enabled: true
+    intent_classifier_model: "phi3.5:3.8b"
+    classification_timeout: 5
+    fallback_model: "llama3.1:8b"
+    
+    # Routing rules: intent -> preferred models
+    rules:
+      coding:
+        - "qwen2.5-coder:7b"
+        - "deepseek-coder:6.7b"
+        - "llama3.1:8b"
+      reasoning:
+        - "deepseek-r1:7b"
+        - "nemotron3-ultra"
+        - "llama3.1:8b"
+      creative:
+        - "llama3.1:8b"
+        - "nemotron3-ultra"
+      analysis:
+        - "nemotron3-ultra"
+        - "llama3.1:8b"
+      fast:
+        - "phi3.5:3.8b"
+        - "gemma2:2b"
+      general:
+        - "llama3.1:8b"
+        - "nemotron3-ultra"
+
+  # Ensemble configuration
+  ensemble:
+    enabled: true
+    max_models: 3
+    synthesis_model: "nemotron3-ultra"
+    synthesis_prompt: |
+      You are a response synthesizer. Given a user query and multiple model responses, 
+      produce the single best answer. Consider accuracy, completeness, clarity, and 
+      correctness. Cite which model provided which insight when relevant.
+      
+      User Query: {query}
+      
+      Model Responses:
+      {responses}
+      
+      Synthesized Best Answer:
+    voting_strategy: "weighted"  # weighted, majority, best_of_n
+    weights:
+      nemotron3-ultra: 1.5
+      llama3.1:8b: 1.0
+      qwen2.5-coder:7b: 1.2
+      deepseek-r1:7b: 1.3
+
+  # Default generation parameters
+  generation:
+    temperature: 0.7
+    top_p: 0.9
+    top_k: 40
+    max_tokens: 4096
+    repeat_penalty: 1.1
+    stop_sequences: []
+
+training:
+  enabled: true
+  method: "qlora"  # qlora, lora, full, dpo
+  
+  # Base model to fine-tune
+  base_model: "unsloth/llama-3.1-8b-instruct-bnb-4bit"
+  base_model_local: "llama3.1:8b-instruct"
+  
+  # Trigger conditions
+  trigger:
+    min_new_samples: 100
+    min_improvement_threshold: 0.02
+    max_training_frequency_hours: 24
+    auto_trigger: true
+  
+  # LoRA/QLoRA parameters
+  lora:
+    r: 64
+    alpha: 128
+    dropout: 0.05
+    bias: "none"
+    target_modules:
+      - "q_proj"
+      - "k_proj"
+      - "v_proj"
+      - "o_proj"
+      - "gate_proj"
+      - "up_proj"
+      - "down_proj"
+    task_type: "CAUSAL_LM"
+  
+  # Unsloth optimized training
+  unsloth:
+    max_seq_length: 4096
+    dtype: "bfloat16"  # bfloat16, float16, float32
+    load_in_4bit: true
+    use_gradient_checkpointing: "unsloth"
+    random_state: 42
+  
+  # Training hyperparameters
+  trainer:
+    per_device_train_batch_size: 2
+    gradient_accumulation_steps: 4
+    warmup_steps: 10
+    max_steps: 100
+    learning_rate: 2e-4
+    weight_decay: 0.01
+    lr_scheduler_type: "cosine"
+    optim: "adamw_8bit"
+    logging_steps: 5
+    save_steps: 50
+    eval_steps: 50
+    fp16: false
+    bf16: true
+    gradient_checkpointing: true
+    dataloader_num_workers: 4
+    remove_unused_columns: false
+  
+  # DPO specific (for preference learning)
+  dpo:
+    beta: 0.1
+    loss_type: "sigmoid"
+    max_prompt_length: 2048
+    max_length: 4096
+    reference_free: false
+
+evaluation:
+  enabled: true
+  judge_model: "nemotron3-ultra"
+  benchmarks:
+    - "mt_bench"
+    - "humaneval"
+    - "gsm8k"
+    - "custom_eval"
+  custom_eval_dataset: "data/eval/custom_eval.jsonl"
+  auto_deploy: true
+  min_score_improvement: 0.02
+  evaluation_timeout: 600
+
+data:
+  # Data curation for training
+  curation:
+    min_conversation_length: 2
+    max_conversation_age_days: 30
+    preference_threshold: 0.7
+    deduplication_threshold: 0.95
+  
+  # Dataset splits
+  splits:
+    train: 0.85
+    validation: 0.10
+    test: 0.05
+
+monitoring:
+  prometheus:
+    enabled: true
+    port: 9090
+    path: "/metrics"
+  logging:
+    level: "INFO"
+    format: "json"
+    file: "logs/neuroseek.log"
+  langfuse:
+    enabled: false
+    public_key: ""
+    secret_key: ""
+    host: "https://cloud.langfuse.com"
+
+celery:
+  broker_url: "redis://localhost:6379/1"
+  result_backend: "redis://localhost:6379/2"
+  task_serializer: "json"
+  result_serializer: "json"
+  accept_content: ["json"]
+  timezone: "UTC"
+  enable_utc: true
+  task_routes:
+    "app.workers.training.*": {"queue": "training"}
+    "app.workers.inference.*": {"queue": "inference"}
+    "app.workers.evaluation.*": {"queue": "evaluation"}
+  worker_prefetch_multiplier: 1
+  task_acks_late: true
