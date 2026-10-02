@@ -53,7 +53,12 @@ jobs:
           cd frontend
           npx cap sync android
 
-      - name: Build Debug APK
+      - name: Clear Gradle Cache
+        run: |
+          rm -rf ~/.gradle/caches/jars-9/
+          rm -rf ~/.gradle/caches/build-cache-*/
+          
+- name: Build Debug APK
         run: |
           cd frontend/android
           for i in {1..5}; do
@@ -73,6 +78,11 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
+      - name: Clear Gradle Cache (Release)
+        run: |
+          rm -rf ~/.gradle/caches/jars-9/
+          rm -rf ~/.gradle/caches/build-cache-*/
+          
       - name: Build Release APK (unsigned)
         run: |
           cd frontend/android
