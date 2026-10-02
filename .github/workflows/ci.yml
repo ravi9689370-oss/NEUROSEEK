@@ -110,6 +110,7 @@ jobs:
           ndk-version: r26d
           cache-key: android-sdk-${{ runner.os }}-${{ hashFiles('frontend/android/gradle/wrapper/gradle-wrapper.properties') }}
           accept-android-sdk-licenses: true
+          packages: platform-tools platforms;android-34 build-tools;34.0.0
 
       - name: Install frontend deps
         run: |
