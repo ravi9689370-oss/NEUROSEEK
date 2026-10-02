@@ -101,3 +101,11 @@ disallow_untyped_defs = true
 where = ["."]
 include = ["app*"]
 exclude = ["tests*", "scripts*", "docs*", "backend/tests*", "backend/scripts*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
