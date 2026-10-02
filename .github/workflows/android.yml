@@ -10,7 +10,7 @@ on:
 jobs:
   build-android:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     
     steps:
       - name: Checkout Repository
@@ -38,28 +38,13 @@ jobs:
           cd frontend
           npx cap sync android
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - name: Set up Gradle
+        uses: gradle/gradle-build-action@v3
         with:
-          distribution: 'temurin'
-          java-version: '17'
-          cache: gradle
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x frontend/android/gradlew
-
-      - name: Clear Gradle Cache & Pre-download BouncyCastle JAR
-        run: |
-          rm -rf ~/.gradle/caches/jars-9/
-          rm -rf ~/.gradle/caches/build-cache-*/
-          mkdir -p ~/.gradle/caches/jars-9/18366b31678c0171857be093a3b8ec22/
-          curl -L -o ~/.gradle/caches/jars-9/18366b31678c0171857be093a3b8ec22/bcprov-jdk18on-1.79.jar \
-            https://repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk18on/1.79/bcprov-jdk18on-1.79.jar 2>/dev/null || true
-
-      - name: Build Debug APK
-        run: |
-          cd frontend/android
-          ./gradlew assembleDebug --no-daemon
+          gradle-version: 8.5
+          arguments: assembleDebug
+          cache-read-only: false
+          build-root-directory: frontend/android
 
       - name: Find APK
         run: |
@@ -73,9 +58,12 @@ jobs:
           retention-days: 7
 
       - name: Build Release APK (unsigned)
-        run: |
-          cd frontend/android
-          ./gradlew assembleRelease --no-daemon
+        uses: gradle/gradle-build-action@v3
+        with:
+          gradle-version: 8.5
+          arguments: assembleRelease
+          cache-read-only: false
+          build-root-directory: frontend/android
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
