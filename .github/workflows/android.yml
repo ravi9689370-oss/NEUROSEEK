@@ -2,110 +2,46 @@ name: Android APK Build
 
 on:
   push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
-  build-android:
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
-    
     steps:
-      - name: Checkout Repository
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+          node-version: 18
 
-      - name: Install Frontend Dependencies
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build Web App
         run: |
           cd frontend
-          npm ci
-
-      - name: Build Frontend (Next.js Static Export)
-        run: |
-          cd frontend
+          npm install
           npm run build
 
-      - name: Sync Capacitor
+      - name: Sync Capacitor Android
         run: |
           cd frontend
           npx cap sync android
 
-      - name: Set up Gradle
-        uses: gradle/gradle-build-action@v3
-        with:
-          gradle-version: 8.5
-          arguments: assembleDebug
-          cache-read-only: false
-          build-root-directory: frontend/android
-
-      - name: Find APK
+      - name: Build Debug APK
         run: |
-          find frontend/android -name "*.apk" -type f 2>/dev/null
+          cd frontend/android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
 
-      - name: Upload Debug APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: neuroseek-debug-apk
+          name: neuroseek-app
           path: frontend/android/app/build/outputs/apk/debug/*.apk
-          retention-days: 7
-
-      - name: Build Release APK (unsigned)
-        uses: gradle/gradle-build-action@v3
-        with:
-          gradle-version: 8.5
-          arguments: assembleRelease
-          cache-read-only: false
-          build-root-directory: frontend/android
-
-      - name: Upload Release APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: neuroseek-release-apk
-          path: frontend/android/app/build/outputs/apk/release/*.apk
-          retention-days: 7
-
-  release:
-    needs: [build-android]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download Debug APK
-        uses: actions/download-artifact@v4
-        with:
-          name: neuroseek-debug-apk
-          path: ./debug-apk
-
-      - name: Download Release APK
-        uses: actions/download-artifact@v4
-        with:
-          name: neuroseek-release-apk
-          path: ./release-apk
-
-      - name: List artifacts
-        run: |
-          ls -la ./debug-apk/
-          ls -la ./release-apk/
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            ./debug-apk/*.apk
-            ./release-apk/*.apk
-          generate_release_notes: true
-          tag_name: v1.0.0-${{ github.run_number }}
-          name: NeuroSeek AI v1.0.0 (Build ${{ github.run_number }})
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
